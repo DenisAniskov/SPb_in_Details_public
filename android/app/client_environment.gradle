@@ -1,0 +1,90 @@
+// Local settings belong only to Android debug APKs: .env.dev sits next to
+// pubspec.yaml at the repository root. Do not declare it in Flutter's pubspec:
+// that would bundle it into release/profile as well.
+def developmentEnvironment = rootProject.file('../.env.dev')
+def generatedDebugAssets = layout.buildDirectory.dir('generated/clientEnvironment/debug')
+
+def prepareDebugEnvironment = tasks.register('prepareDebugEnvironment') {
+    // A generic task handles a missing/deleted source, unlike Copy/Sync tasks
+    // which can skip NO-SOURCE and leave the previous credential in outputs.
+    inputs.files(developmentEnvironment)
+    outputs.dir(generatedDebugAssets)
+    doLast {
+        def outputDirectory = generatedDebugAssets.get().asFile
+        delete(outputDirectory)
+        mkdir(outputDirectory)
+        if (developmentEnvironment.isFile()) {
+            copy {
+                from(developmentEnvironment)
+                // Android's asset merger ignores dotfiles by default.
+                rename { 'development.env' }
+                into(new File(outputDirectory, 'flutter_assets'))
+            }
+        }
+    }
+}
+
+android.sourceSets.debug.assets.srcDir(generatedDebugAssets)
+tasks.configureEach { task ->
+    if (task.name == 'mergeDebugAssets') {
+        task.dependsOn(prepareDebugEnvironment)
+    }
+}
+
+// Fail nondebug builds before Dart compilation, even if a local dev file exists.
+// Dart repeats validation at startup. Diagnostics never interpolate values.
+def validateExplicitClientEnvironment = tasks.register('validateExplicitClientEnvironment') {
+    doLast {
+        def values = [:]
+        try {
+            def encodedDefines = project.findProperty('dart-defines') ?: ''
+            encodedDefines.split(',').findAll { !it.isEmpty() }.each { encoded ->
+                def decoded = new String(Base64.decoder.decode(encoded), 'UTF-8')
+                def separator = decoded.indexOf('=')
+                if (separator > 0) {
+                    values[decoded.substring(0, separator)] = decoded.substring(separator + 1).trim()
+                }
+            }
+        } catch (Exception ignored) {
+            throw new GradleException('Invalid dart-defines encoding; client configuration values are not logged.')
+        }
+
+        def errors = []
+        ['MAPKIT_API_KEY', 'API_BASE_URL', 'APP_ENV'].each { name ->
+            if (!values.containsKey(name)) {
+                errors.add("${name}: release/profile requires an explicit --dart-define (or --dart-define-from-file).")
+            }
+        }
+        if (!(values['APP_ENV'] in ['staging', 'production'])) {
+            errors.add('APP_ENV: release/profile requires staging or production.')
+        }
+        def key = values['MAPKIT_API_KEY'] ?: ''
+        def normalizedKey = key.toUpperCase(Locale.ROOT)
+        if (key.isEmpty() || key =~ /[\s\x00-\x1f\x7f<>]/ ||
+                normalizedKey.startsWith('YOUR_') || normalizedKey.startsWith('REPLACE_') ||
+                normalizedKey in ['CHANGEME', 'PLACEHOLDER', 'TODO']) {
+            errors.add('MAPKIT_API_KEY: provide a nonempty mobile MapKit credential instead of a placeholder.')
+        }
+        try {
+            def rawUrl = values['API_BASE_URL'] ?: ''
+            def uri = new URI(rawUrl)
+            if (uri.scheme != 'https' || !uri.host || uri.rawUserInfo != null ||
+                    uri.rawQuery != null || uri.rawFragment != null ||
+                    (uri.port != -1 && (uri.port < 1 || uri.port > 65535))) {
+                errors.add('API_BASE_URL: release/profile requires an absolute HTTPS backend URL without credentials, query or fragment.')
+            }
+        } catch (Exception ignored) {
+            errors.add('API_BASE_URL: invalid HTTPS backend URL.')
+        }
+        if (!errors.isEmpty()) {
+            throw new GradleException('Client configuration is invalid:\n' + errors.join('\n'))
+        }
+    }
+}
+
+tasks.configureEach { task ->
+    if (task.name in ['preReleaseBuild', 'preProfileBuild',
+                     'compileFlutterBuildRelease', 'compileFlutterBuildProfile']) {
+        task.dependsOn(validateExplicitClientEnvironment)
+    }
+}

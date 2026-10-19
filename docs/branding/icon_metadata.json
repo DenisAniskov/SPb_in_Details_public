@@ -1,0 +1,8 @@
+{
+  "name": "Петербург в деталях",
+  "source": "docs/branding/original_app_icon.png",
+  "format": "PNG",
+  "size": "1254x1254",
+  "sha256": "ad138ca985d832ad1152be4c911ac9e4ec37533c2afd90bb02f1ba1d923f5d5e",
+  "note": "Source provided by the project creator; optimized Android layers are generated separately by tool/generate_branding_icons.py."
+}

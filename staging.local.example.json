@@ -1,0 +1,5 @@
+{
+  "APP_ENV": "staging",
+  "API_BASE_URL": "https://steadfast-curiosity-production-f250.up.railway.app",
+  "MAPKIT_API_KEY": "REPLACE_WITH_LOCAL_MAPKIT_KEY"
+}

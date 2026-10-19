@@ -1,0 +1,40 @@
+name: smart_navigator_spb
+description: "Петербург в деталях - пешеходный навигатор для знакомства с Санкт-Петербургом."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.13.0 <4.0.0'
+  flutter: ">=3.47.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Официальный SDK Яндекс Карт для Flutter (Full-версия для маршрутизации)
+  yandex_maps_mapkit: 4.45.0
+  
+  # Сетевой клиент и состояние
+  dio: ^5.7.0
+  provider: ^6.1.2
+  flutter_dotenv: 6.0.1
+  url_launcher: 6.3.3
+  geolocator: ^14.0.0
+  # Small, non-sensitive guest preferences and favorite identifiers only.
+  shared_preferences: ^2.5.3
+  # C14.2: read the installed version from Android package metadata instead of
+  # duplicating pubspec.yaml values in the UI.
+  package_info_plus: ^10.2.2
+  crypto: ^3.0.7
+  flutter_tts: 4.2.5
+  
+  # UI и иконки
+  cupertino_icons: ^1.0.8
+  flutter_markdown_plus: ^1.0.12
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

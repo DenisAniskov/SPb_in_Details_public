@@ -1,0 +1,117 @@
+name: CI
+
+# Continuous integration for the release source: static analysis, tests,
+# configuration and credential checks, and a debug build. No job publishes an
+# artifact: debug APKs built here carry no local configuration and must not be
+# mistaken for a release.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: 3.47.6
+  JAVA_VERSION: "21"
+
+jobs:
+  verify:
+    name: Analyze, test and configuration checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The formatting report needs the base revision to diff against.
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Release snapshot checks
+        # Manifest, applicationId, versions, brand strings, icon resources,
+        # ODbL notices and a credential scan of the published files.
+        run: python3 tool/check_release_snapshot.py
+
+      - name: Formatting report for changed Dart files (advisory)
+        # Existing sources predate the Dart 3.13 formatter; a bulk reformat is
+        # out of scope, so this step reports drift without failing the build.
+        run: python3 tool/check_changed_dart_format.py
+
+      - name: Static analysis
+        run: flutter analyze
+
+      - name: Tests
+        # Includes the icon pixel invariants: adaptive safe zone, monochrome
+        # mask, legacy transparency and the main-screen header scenarios.
+        run: flutter test --concurrency=1
+
+  android:
+    name: Android debug build (no credentials)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      - name: Build debug APK
+        # Compiles without a MapKit key or any backend credential: local
+        # settings only ever reach debug builds and none are present here.
+        # Gradle may install the pinned NDK on the runner; that is expected.
+        run: flutter build apk --debug
+
+      - name: Verify APK metadata
+        run: |
+          set -euo pipefail
+          APK=build/app/outputs/flutter-apk/app-debug.apk
+          test -f "$APK"
+          AAPT2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          BADGING=$("$AAPT2" dump badging "$APK")
+          echo "$BADGING" | grep -F "package: name='ru.smartnavigator.spb'" 
+          echo "$BADGING" | grep -F "versionName='1.0.0'"
+          echo "$BADGING" | grep -F "sdkVersion:'26'"
+          echo "$BADGING" | grep -F "application-label:'Петербург в деталях'"
+          echo "$BADGING" | grep -F "application-icon"
+          sha256sum "$APK"
+
+      - name: Release build must refuse to sign without a keystore
+        run: |
+          set -euo pipefail
+          # A valid client configuration with no release keystore must stop the
+          # release build: no artifact may look publishable before signing.
+          if flutter build apk --release \
+              --dart-define=MAPKIT_API_KEY=ci-synthetic-mapkit-key \
+              --dart-define=API_BASE_URL=https://api.example.com \
+              --dart-define=APP_ENV=production 2>&1 | tee release-build.log; then
+            echo "release build unexpectedly succeeded without release signing"
+            exit 1
+          fi
+          grep -F "Release signing is not configured" release-build.log

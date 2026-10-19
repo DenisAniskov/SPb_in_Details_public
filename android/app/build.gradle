@@ -1,0 +1,98 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'dev.flutter.flutter-gradle-plugin'
+}
+
+// Release signing values live in android/key.properties, which is local and
+// never committed. When it is absent the release build type has no signing
+// config at all and validateReleaseSigning stops the build, so a debug-signed
+// or unsigned artifact can never be mistaken for the publishable release.
+def releaseKeyPropertiesFile = rootProject.file('key.properties')
+def hasReleaseKeyProperties = releaseKeyPropertiesFile.isFile()
+def releaseKeyProperties = new Properties()
+if (hasReleaseKeyProperties) {
+    releaseKeyPropertiesFile.withInputStream { releaseKeyProperties.load(it) }
+}
+def resolveKeystore = { String value ->
+    def candidate = new File(value)
+    candidate.isAbsolute() ? candidate : new File(rootProject.projectDir, value)
+}
+
+android {
+    namespace 'ru.smartnavigator.spb'
+    compileSdk 36
+    ndkVersion flutter.ndkVersion
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    kotlinOptions { jvmTarget = '21' }
+    defaultConfig {
+        applicationId 'ru.smartnavigator.spb'
+        minSdk 26
+        targetSdk 36
+        versionCode flutter.versionCode
+        versionName flutter.versionName
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+        }
+    }
+    signingConfigs {
+        if (hasReleaseKeyProperties) {
+            release {
+                storeFile resolveKeystore(releaseKeyProperties['storeFile'])
+                storePassword releaseKeyProperties['storePassword']
+                keyAlias releaseKeyProperties['keyAlias']
+                keyPassword releaseKeyProperties['keyPassword']
+            }
+        }
+    }
+    buildTypes {
+        release {
+            if (hasReleaseKeyProperties) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+}
+
+// Debug and profile APKs keep the standard Android debug keystore.
+def validateReleaseSigning = tasks.register('validateReleaseSigning') {
+    // Messages name the missing field only; values are never interpolated.
+    doLast {
+        def errors = []
+        if (!hasReleaseKeyProperties) {
+            errors.add('android/key.properties is missing; copy android/key.properties.example.')
+        } else {
+            ['storeFile', 'storePassword', 'keyAlias', 'keyPassword'].each { name ->
+                def value = (releaseKeyProperties[name] ?: '').toString().trim()
+                if (value.isEmpty() || value.startsWith('YOUR_') ||
+                        value.startsWith('REPLACE_') || value == 'CHANGE_ME') {
+                    errors.add("${name}: no real value in android/key.properties.")
+                }
+            }
+            def storeFile = (releaseKeyProperties['storeFile'] ?: '').toString().trim()
+            if (storeFile && !resolveKeystore(storeFile).isFile()) {
+                errors.add('storeFile: keystore not found at the configured path.')
+            }
+        }
+        if (!errors.isEmpty()) {
+            throw new GradleException('Release signing is not configured:\n' +
+                    errors.join('\n') +
+                    '\nRelease artifacts require a permanent keystore; see docs/BUILDING.md.')
+        }
+    }
+}
+
+tasks.configureEach { task ->
+    if (task.name in ['preReleaseBuild', 'compileFlutterBuildRelease']) {
+        task.dependsOn(validateReleaseSigning)
+    }
+}
+
+flutter { source '../..' }
+apply from: 'client_environment.gradle'
+dependencies {
+    implementation 'com.google.android.gms:play-services-location:21.1.0'
+}

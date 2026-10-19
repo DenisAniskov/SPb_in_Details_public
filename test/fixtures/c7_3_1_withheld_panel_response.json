@@ -1,0 +1,170 @@
+{
+  "status": "unavailable",
+  "method": "experimental_pollen_exposure",
+  "method_version": "c7_3.1",
+  "estimate": true,
+  "confidence": "unavailable",
+  "evaluated_period": {
+    "start": "2026-07-17T11:00:00+03:00",
+    "end": "2026-07-17T13:00:00+03:00",
+    "timezone": "+03:00"
+  },
+  "route_length_meters": 1598.2,
+  "known_meters": 0.0,
+  "unknown_meters": 1598.2,
+  "coverage_share": 0.0,
+  "walking_duration_seconds": 7200.0,
+  "elapsed_duration_seconds": 7200.0,
+  "concentration_unit": "grains/m³",
+  "species": [
+    {
+      "code": "alder_pollen",
+      "name": "Ольха",
+      "unit": "grains/m³",
+      "status": "unknown",
+      "known_seconds": 3600.0,
+      "total_seconds": 7200.0,
+      "known_share": 0.5,
+      "mean_concentration": null,
+      "peak_concentration": null,
+      "peak_at": null,
+      "exposure_grains_hours_per_m3": null
+    },
+    {
+      "code": "birch_pollen",
+      "name": "Берёза",
+      "unit": "grains/m³",
+      "status": "unknown",
+      "known_seconds": 3600.0,
+      "total_seconds": 7200.0,
+      "known_share": 0.5,
+      "mean_concentration": null,
+      "peak_concentration": null,
+      "peak_at": null,
+      "exposure_grains_hours_per_m3": null
+    },
+    {
+      "code": "grass_pollen",
+      "name": "Злаки",
+      "unit": "grains/m³",
+      "status": "unknown",
+      "known_seconds": 7200.0,
+      "total_seconds": 7200.0,
+      "known_share": 1.0,
+      "mean_concentration": null,
+      "peak_concentration": null,
+      "peak_at": null,
+      "exposure_grains_hours_per_m3": null
+    },
+    {
+      "code": "mugwort_pollen",
+      "name": "Полынь",
+      "unit": "grains/m³",
+      "status": "unknown",
+      "known_seconds": 7200.0,
+      "total_seconds": 7200.0,
+      "known_share": 1.0,
+      "mean_concentration": null,
+      "peak_concentration": null,
+      "peak_at": null,
+      "exposure_grains_hours_per_m3": null
+    },
+    {
+      "code": "ragweed_pollen",
+      "name": "Амброзия",
+      "unit": "grains/m³",
+      "status": "unknown",
+      "known_seconds": 7200.0,
+      "total_seconds": 7200.0,
+      "known_share": 1.0,
+      "mean_concentration": null,
+      "peak_concentration": null,
+      "peak_at": null,
+      "exposure_grains_hours_per_m3": null
+    },
+    {
+      "code": "olive_pollen",
+      "name": "Маслина",
+      "unit": "grains/m³",
+      "status": "unknown",
+      "known_seconds": 7200.0,
+      "total_seconds": 7200.0,
+      "known_share": 1.0,
+      "mean_concentration": null,
+      "peak_concentration": null,
+      "peak_at": null,
+      "exposure_grains_hours_per_m3": null
+    }
+  ],
+  "legs": null,
+  "reasons": [
+    "pollen_incomplete",
+    "pollen_no_complete_panel"
+  ],
+  "limitations": [
+    "Это концентрации пыльцы в воздухе, а не индивидуальная вдыхаемая доза и не прогноз симптомов.",
+    "Данные — модельный прогноз CAMS (Copernicus), а не измерения: временной шаг 1 час, шаг сетки 0,1° (около 11 км) для всей городской агломерации.",
+    "Модель не различает улицу, двор, парк и тротуар внутри одной ячейки: различия между соседними улицами не рассчитываются и не показываются.",
+    "Порогов опасности и медицинских категорий в этой версии нет: они потребовали бы проверенного источника для каждого вида пыльцы.",
+    "Концентрации разных видов не суммируются в единый «риск аллергии».",
+    "Часы за пределами четырёхдневного горизонта прогноза остаются неизвестными: пропуск не заполняется нулём и не продолжается по инерции.",
+    "Ноль — это значение модели, а не подтверждённое отсутствие пыльцы в воздухе; в межсезонье ноль ожидаем и не означает индивидуальной безопасности.",
+    "Время осмотра POI не входит в накопление: о среде внутри POI данных нет."
+  ],
+  "assumptions": [
+    "Концентрация считается постоянной внутри часа [t, t+1h) — источник не даёт более тонкого временного разрешения, интерполяция между часами не выполняется.",
+    "Время прохождения участка — доля его длины от native-длительности этапа (как в C7.1/C7.2); посещение POI сдвигает все последующие этапы.",
+    "Экспозиция суммируется только по времени ходьбы; при остановке на POI накопление не продолжается.",
+    "Все этапы относятся к одной модельной ячейке CAMS: значение зависит только от часа прохождения и не зависит от координат этапа внутри ячейки.",
+    "Экспозиция покрывает только известную долю прогулки — рядом с ней публикуется доля покрытия, продлевать интеграл на неизвестное время нельзя."
+  ],
+  "source_provenance": {
+    "available": true,
+    "provider": "Open-Meteo",
+    "model": "cams_europe",
+    "model_name": "CAMS European Air Quality Forecast (CAMS ENSEMBLE)",
+    "kind": "modeled_forecast_and_recent_archived_forecast",
+    "observed_at": null,
+    "model_issued_at": null,
+    "retrieved_at": "2026-07-17T08:00:00+00:00",
+    "valid_until": "2026-07-17T09:00:00+00:00",
+    "temporal_resolution_seconds": 3600,
+    "spatial_resolution_meters": 11000,
+    "grid_step_degrees": 0.1,
+    "cell_latitude": 59.9,
+    "cell_longitude": 30.3,
+    "cell_bounds": [
+      59.85,
+      30.25,
+      59.95,
+      30.35
+    ],
+    "contacted_point": [
+      59.9405,
+      30.3165
+    ],
+    "interval_start": "2026-07-17T07:00:00+00:00",
+    "interval_end": "2026-07-17T14:00:00+00:00",
+    "unit": "grains/m³",
+    "species": [
+      "alder_pollen",
+      "birch_pollen",
+      "grass_pollen",
+      "mugwort_pollen",
+      "ragweed_pollen",
+      "olive_pollen"
+    ],
+    "license": "CC-BY-4.0",
+    "source_url": "https://open-meteo.com/en/docs/air-quality-api",
+    "attribution": "Pollen data by Open-Meteo.com; CAMS ENSEMBLE (Copernicus Atmosphere Monitoring Service) model",
+    "time_semantics": "instantaneous concentration valid for the indicated hour [t, t+1h); null is a gap, not zero"
+  },
+  "diagnostics": {
+    "legs": 2,
+    "legs_outside_source_cell": 0,
+    "species_available": 4,
+    "species_partial": 2,
+    "species_unknown": 0,
+    "species_withheld": 6
+  }
+}

@@ -1,0 +1,10 @@
+# The ODbL evidence chain records SHA-256 values for acquisition responses,
+# request logs and the shipped pilot datasets, and the tests compare raw bytes.
+# Checkouts must therefore stay byte-exact regardless of core.autocrlf: a fresh
+# Windows checkout once rewrote LF to CRLF and invalidated the pinned hashes.
+data/** -text
+
+# C7.3.1 exercises the Flutter model against the VERBATIM backend response body
+# stored as a fixture and documents its SHA-256, so that fixture must
+# materialize byte-exactly on every platform too (same class as above).
+test/fixtures/*.json -text

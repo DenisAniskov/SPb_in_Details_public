@@ -1,0 +1,53 @@
+# Secrets and local configuration: real values never enter the repository.
+.env
+.env.*
+**/.env
+**/.env.*
+# Only credential-free templates are committed.
+!.env.example
+!**/.env.example
+# Local build parameters for a staging APK (holds the MapKit key).
+staging.local.json
+*.local.json
+!**/*.local.example.json
+
+# Android release signing: keystore and passwords stay local (see docs/BUILDING.md).
+android/key.properties
+*.jks
+*.keystore
+*.p12
+*.key
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.pub-cache/
+.pub/
+
+# Android
+android/.gradle/
+android/.kotlin/
+android/captures/
+android/local.properties
+android/app/build/
+android/app/local.properties
+**/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/**/.cxx/
+
+# Local runtime artifacts and logs
+.controller-round2/
+.runtime-*.log
+*.pid
+
+# IDEs and operating system files
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

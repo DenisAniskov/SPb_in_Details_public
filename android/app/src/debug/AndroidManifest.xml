@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Phase A6.6: plain HTTP stays possible only where it is needed — the
+         local debug backend on 10.0.2.2 or a LAN address. Profile and release
+         builds keep the strict value declared in the main manifest. -->
+    <application
+        android:usesCleartextTraffic="true"
+        tools:replace="android:usesCleartextTraffic" />
+</manifest>

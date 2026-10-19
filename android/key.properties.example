@@ -1,0 +1,10 @@
+# Release signing for the Android app. Copy this file to android/key.properties
+# and fill in real values. android/key.properties is ignored by Git: keystore and
+# passwords must never be committed. See docs/BUILDING.md.
+#
+# storeFile: path to the release keystore. Relative paths are resolved against
+# the android/ directory; absolute paths work too. Use forward slashes.
+storeFile=keystore/release-upload.jks
+storePassword=CHANGE_ME
+keyAlias=upload
+keyPassword=CHANGE_ME
