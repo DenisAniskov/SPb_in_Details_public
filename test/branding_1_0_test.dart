@@ -168,7 +168,17 @@ Future<void> mountMapHeader(
 /// build's own `local.properties`. Cyrillic metrics only match the device when
 /// the real Roboto is loaded: the default test font draws every glyph as a full
 /// em square and would make the width checks meaningless.
+///
+/// The Android build downloads the material font artifacts. A checkout that has
+/// never built Android (a CI runner, for example) has the artifact directory but
+/// not the files, so the directory alone does not mean the fonts are usable:
+/// width checks need real font files, and without them they stay skipped.
 String? _flutterFontDir() {
+  const requiredFiles = [
+    'roboto-regular.ttf',
+    'roboto-bold.ttf',
+    'materialicons-regular.otf',
+  ];
   final properties = File('${_packageRoot().path}/android/local.properties');
   if (!properties.existsSync()) return null;
   for (final line in properties.readAsLinesSync()) {
@@ -178,7 +188,12 @@ String? _flutterFontDir() {
       '/',
     );
     final dir = '$sdk/bin/cache/artifacts/material_fonts';
-    if (Directory(dir).existsSync()) return dir;
+    if (Directory(dir).existsSync() &&
+        requiredFiles.every(
+          (file) => File('$dir/$file').existsSync(),
+        )) {
+      return dir;
+    }
   }
   return null;
 }

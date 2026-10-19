@@ -21,6 +21,9 @@ concurrency:
 env:
   FLUTTER_VERSION: 3.47.6
   JAVA_VERSION: "21"
+  # The public-transport-neutral test suite pins ISO-8601 strings with the LOCAL
+  # UTC offset, so it must run in the timezone the project targets.
+  TZ: Europe/Moscow
 
 jobs:
   verify:
@@ -44,6 +47,11 @@ jobs:
 
       - name: Resolve dependencies
         run: flutter pub get
+
+      - name: Precache material fonts
+        # The header width assertions load the real Roboto files; the universally
+        # precached artifacts provide them on a clean runner.
+        run: flutter precache --universal
 
       - name: Release snapshot checks
         # Manifest, applicationId, versions, brand strings, icon resources,
@@ -97,7 +105,7 @@ jobs:
           BADGING=$("$AAPT2" dump badging "$APK")
           echo "$BADGING" | grep -F "package: name='ru.smartnavigator.spb'" 
           echo "$BADGING" | grep -F "versionName='1.0.0'"
-          echo "$BADGING" | grep -F "sdkVersion:'26'"
+          echo "$BADGING" | grep -F "minSdkVersion:'26'"
           echo "$BADGING" | grep -F "application-label:'Петербург в деталях'"
           echo "$BADGING" | grep -F "application-icon"
           sha256sum "$APK"
