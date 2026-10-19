@@ -176,6 +176,10 @@ flutter test
 
 ## Лицензии и источники данных
 
+- Исходный код: **Copyright © 2026 Денис Аниськов. Все права защищены.
+  Свободная лицензия на оригинальный авторский код не предоставляется**;
+  уведомление — [COPYRIGHT.md](COPYRIGHT.md), разбор правовых режимов —
+  [docs/LICENSING.md](docs/LICENSING.md).
 - Данные каталога и географические факты: **© OpenStreetMap contributors**,
   лицензия **ODbL 1.0**; машиночитаемый каталог и доказательная база —
   в каталоге [`data/`](data/README.md).
@@ -187,7 +191,14 @@ flutter test
 - Редакционные тексты и подборки — авторские материалы проекта.
 
 Подробные условия, атрибуции и обязательства: [docs/THIRD_PARTY_ATTRIBUTIONS.md](docs/THIRD_PARTY_ATTRIBUTIONS.md).
-Лицензия на исходный код пока не выбрана — см. [docs/LICENSING.md](docs/LICENSING.md).
+Переиспользование редакционных материалов каталога вместе с самим каталогом и
+производными базами сохраняется на условиях [data/catalog/README.md](data/catalog/README.md).
+
+Серверная часть проекта — отдельный компонент с согласованным авторским
+оформлением: публичный исходный код backend —
+[DenisAniskov/SPb_in_Details_Backend_public](https://github.com/DenisAniskov/SPb_in_Details_Backend_public)
+— публикуется под тем же уведомлением «Copyright © 2026 Денис Аниськов. All
+rights reserved.» В этот репозиторий серверная часть не входит.
 
 ## Известные ограничения
 
