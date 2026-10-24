@@ -104,7 +104,8 @@ jobs:
           AAPT2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
           BADGING=$("$AAPT2" dump badging "$APK")
           echo "$BADGING" | grep -F "package: name='ru.smartnavigator.spb'" 
-          echo "$BADGING" | grep -F "versionName='1.0.0'"
+          echo "$BADGING" | grep -F "versionName='1.1.0'"
+          echo "$BADGING" | grep -F "versionCode='2'"
           echo "$BADGING" | grep -F "minSdkVersion:'26'"
           echo "$BADGING" | grep -F "application-label:'Петербург в деталях'"
           echo "$BADGING" | grep -F "application-icon"
