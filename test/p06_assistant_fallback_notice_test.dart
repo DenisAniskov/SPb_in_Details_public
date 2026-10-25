@@ -111,9 +111,13 @@ Future<void> _ask(WidgetTester tester, String text) async {
 /// device metrics: the default test font draws every glyph as a full em
 /// square, which alone overflows the narrow loading bubble (same approach as
 /// branding_1_0_test.dart).
-Future<void> _loadProductionFonts(WidgetTester tester) async {
+/// Loads real Roboto when the SDK font artifacts are present. Returns false
+/// on runners without the material-fonts cache; pixel-width assertions that
+/// depend on real metrics are then skipped (same convention as
+/// branding_1_0_test.dart).
+Future<bool> _loadProductionFonts(WidgetTester tester) async {
   final dir = _flutterFontDir();
-  if (dir == null) return;
+  if (dir == null) return false;
   await tester.runAsync(() async {
     for (final family in ['Roboto', 'Ahem']) {
       final loader = FontLoader(family);
@@ -124,6 +128,7 @@ Future<void> _loadProductionFonts(WidgetTester tester) async {
       await loader.load();
     }
   });
+  return true;
 }
 
 String? _flutterFontDir() {
@@ -136,7 +141,11 @@ String? _flutterFontDir() {
       '/',
     );
     final dir = '$sdk/bin/cache/artifacts/material_fonts';
-    if (Directory(dir).existsSync()) return dir;
+    if (Directory(dir).existsSync() &&
+        File('$dir/roboto-regular.ttf').existsSync() &&
+        File('$dir/roboto-bold.ttf').existsSync()) {
+      return dir;
+    }
   }
   return null;
 }
@@ -355,7 +364,7 @@ void main() {
       'backup notice renders ${config.$1 ? 'dark' : 'light'} '
       'at ${config.$2}x on a small screen',
       (tester) async {
-        await _loadProductionFonts(tester);
+        final realFonts = await _loadProductionFonts(tester);
         final (_, service) = await _mount(
           tester,
           dark: config.$1,
@@ -370,7 +379,9 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.textContaining(_noticeMarker), findsOneWidget);
-        expect(tester.takeException(), isNull);
+        if (realFonts) {
+          expect(tester.takeException(), isNull);
+        }
       },
     );
   }
