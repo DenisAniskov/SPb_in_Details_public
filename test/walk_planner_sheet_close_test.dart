@@ -80,6 +80,7 @@ void main() {
       expect(find.text(AppStrings.routeBuiltSuccess), findsNothing);
       // The provider's human-readable message is visible inside the sheet.
       expect(routing.errorMessage, isNotNull);
+      expect(find.text(routing.errorMessage!), findsOneWidget);
       expect(find.byType(WalkPlannerSheet), findsOneWidget);
       expect(routing.walkPlaces, hasLength(1));
       // The button is enabled again for a retry.
