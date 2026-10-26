@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smart_navigator_spb/core/constants/app_colors.dart';
+import 'package:smart_navigator_spb/core/constants/app_strings.dart';
 import 'package:smart_navigator_spb/core/utils/russian_plurals.dart';
 import 'package:smart_navigator_spb/data/repositories/places_repository.dart';
 import 'package:smart_navigator_spb/providers/places_provider.dart';
@@ -9,7 +10,7 @@ import 'package:smart_navigator_spb/ui/screens/main_map_screen.dart';
 import 'package:smart_navigator_spb/ui/widgets/smart_walk_wizard_sheet.dart';
 import 'package:smart_navigator_spb/ui/widgets/start_point_selector_dialog.dart';
 
-class WalkPlannerSheet extends StatelessWidget {
+class WalkPlannerSheet extends StatefulWidget {
   const WalkPlannerSheet({
     super.key,
     this.embedded = false,
@@ -29,13 +30,74 @@ class WalkPlannerSheet extends StatelessWidget {
   final PlacesRepository? repository;
 
   @override
+  State<WalkPlannerSheet> createState() => _WalkPlannerSheetState();
+}
+
+class _WalkPlannerSheetState extends State<WalkPlannerSheet> {
+  /// Guards the standalone "build" button between the tap and the awaited
+  /// provider result so a double press cannot queue a second MapKit request.
+  bool _buildInFlight = false;
+
+  /// Honest fallback shown when a build finished without a route and the
+  /// provider published no human-readable error of its own.
+  String? _fallbackError;
+
+  /// Standalone mode only (`onContinue == null`): awaits the real outcome of
+  /// the user's own request, then closes the sheet exactly once on success.
+  /// The embedded wizard keeps `onContinue` and its own multi-step flow, so
+  /// this handler never runs there.
+  Future<void> _buildWalkAndClose(RoutingProvider routing) async {
+    if (_buildInFlight || routing.isCalculating) return;
+    setState(() {
+      _buildInFlight = true;
+      _fallbackError = null;
+    });
+    // Capture lookups before the await: the sheet may be gone by completion.
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final build = routing.buildWalkRoute();
+    // buildWalkRoute claims its request id synchronously before the first
+    // await, so reading it right after the call started yields this build's
+    // own id — capturing earlier would always look superseded.
+    final requestId = routing.requestId;
+    await build;
+    if (!mounted) return;
+    setState(() => _buildInFlight = false);
+    // Ignore outcomes that a newer request (or cancellation) superseded: only
+    // this build's own result may close the sheet or report success.
+    if (routing.requestId != requestId) return;
+    if (routing.hasRoute && routing.isWalkRoute) {
+      navigator.pop();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(AppStrings.routeBuiltSuccess),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    if (routing.errorMessage == null && !routing.hasRoute) {
+      setState(
+        () => _fallbackError = 'Не удалось построить маршрут. Попробуйте изменить выбранные места и повторить.',
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final routing = context.watch<RoutingProvider>();
     final walkPlaces = routing.walkPlaces;
     final startPoint = routing.startPoint;
     final isMaxReached = walkPlaces.length >= RoutingProvider.maxWalkPlaces;
-    final isNavActive = routing.navigationLocked || disabled;
+    final isNavActive = routing.navigationLocked || widget.disabled;
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    // The last routing operation failed and the provider's own message is the
+    // most precise explanation; the fallback covers a route-less completion
+    // without any message. Both keep the sheet open for a retry.
+    final buildError =
+        (!routing.isCalculating && routing.status == RoutingStatus.error)
+        ? routing.errorMessage
+        : _fallbackError;
 
     return PopScope(
       // Back closes the keyboard before the modal sheet itself.
@@ -128,7 +190,7 @@ class WalkPlannerSheet extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (!embedded)
+                    if (!widget.embedded)
                       IconButton(
                         tooltip: 'Умная прогулка (автоподбор)',
                         icon: Icon(
@@ -176,14 +238,58 @@ class WalkPlannerSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                if (embedded)
+                if (widget.embedded)
                   ChangeNotifierProvider(
-                    create: (_) => PlacesProvider(repository: repository),
-                    child: _ManualCatalog(disabled: disabled),
+                    create: (_) =>
+                        PlacesProvider(repository: widget.repository),
+                    child: _ManualCatalog(disabled: widget.disabled),
                   ),
 
+                // A failed build keeps the sheet open: the selected places
+                // survive and this message explains what to try next.
+                if (buildError != null &&
+                    !widget.embedded &&
+                    walkPlaces.isNotEmpty) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: AppPalette.of(context).accent
+                          .withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppPalette.of(context).accent
+                            .withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 16,
+                          color: AppPalette.of(context).accent,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            buildError,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppPalette.of(context).accent,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                ],
+
                 // Стартовая точка
-                if (!embedded)
+                if (!widget.embedded)
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -509,9 +615,9 @@ class WalkPlannerSheet extends StatelessWidget {
                             )
                           : const Icon(Icons.directions_walk),
                       label: Text(
-                        routing.isCalculating || busy
+                        routing.isCalculating || widget.busy || _buildInFlight
                             ? 'Строим пешеходный маршрут…'
-                            : onContinue != null
+                            : widget.onContinue != null
                             ? 'Построить прогулку'
                             : 'Построить прогулку (${walkPlaces.length} ${pluralPlaces(walkPlaces.length)})',
                         style: const TextStyle(
@@ -519,12 +625,17 @@ class WalkPlannerSheet extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      onPressed: routing.isCalculating || busy || isNavActive
+                      onPressed:
+                          routing.isCalculating ||
+                              widget.busy ||
+                              _buildInFlight ||
+                              isNavActive
                           ? null
-                          : onContinue ?? () => routing.buildWalkRoute(),
+                          : widget.onContinue ??
+                                () => _buildWalkAndClose(routing),
                     ),
                   ),
-                if (walkPlaces.isNotEmpty && onContinue != null) ...[
+                if (walkPlaces.isNotEmpty && widget.onContinue != null) ...[
                   const SizedBox(height: 6),
                   const Text(
                     'Проверим настоящий пешеходный маршрут, расстояние и время по карте.',
