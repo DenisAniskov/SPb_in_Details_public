@@ -227,6 +227,11 @@ class RoutingProvider extends ChangeNotifier {
   /// A guided walk edits an isolated provider so the map's published walk is
   /// preserved throughout the wizard, including native failures and cancel.
   bool get isGuidedDraft => _guidedOwner != null;
+
+  /// Monotonic id of the latest routing request. Callers that await a build
+  /// capture it beforehand and treat their outcome as superseded when it no
+  /// longer matches, so a stale completion never impersonates a fresh result.
+  int get requestId => _requestId;
   bool get guidedDraftIsCurrent {
     final owner = _guidedOwner;
     return owner != null &&
