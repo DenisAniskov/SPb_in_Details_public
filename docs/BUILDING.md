@@ -145,7 +145,7 @@ sha256sum build/app/outputs/flutter-apk/app-release.apk
 
 Ожидаемые значения метаданных: `applicationId` `ru.smartnavigator.spb`, метка
 `Петербург в деталях`, `minSdk 26`, `targetSdk 36`, версия из `pubspec.yaml`
-(`1.0.0+1`).
+(`1.1.1+3`).
 
 ## Операционные замечания
 

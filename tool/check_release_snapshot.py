@@ -73,7 +73,7 @@ check(
 )
 check(BRAND_NAME in strings, f'strings.xml app_name is not "{BRAND_NAME}"')
 check("name: smart_navigator_spb" in pubspec, "pubspec package name changed")
-check("version: 1.1.0+2" in pubspec, "pubspec version is not 1.1.0+2")
+check("version: 1.1.1+3" in pubspec, "pubspec version is not 1.1.1+3")
 
 # --- Icon resources ------------------------------------------------------------
 
